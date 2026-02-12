@@ -1,20 +1,35 @@
 # Use lightweight Python image
 FROM python:3.11-slim
+
+# Set working directory inside the container
 WORKDIR /app
+
 # Copy requirements file (use --no-cache-dir to avoid pip cache)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r /app/requirements.txt && \
     rm -rf /root/.cache/pip
-# Copy the application code
-COPY app .
+
+# Copy the application code into /app
+# (previous Dockerfile used `COPY app .` which fails because there's no top-level `app` folder)
+COPY . /app
+
+# Build-time check: ensure the model file was copied into the image
+RUN if [ ! -f /app/src/model/iris_model.pkl ]; then \
+      echo "ERROR: model file /app/src/model/iris_model.pkl not found in image build context" >&2; \
+      echo "Contents of /app/src:"; ls -la /app/src || true; \
+      echo "Contents of /app/src/model:"; ls -la /app/src/model || true; \
+      exit 1; \
+    fi
+
 # Create a non-root user and switch to it for security
 RUN addgroup --system appuser && \
     adduser --system --ingroup appuser appuser && \
     chown -R appuser:appuser /app
+
 USER appuser
+
 # Expose the port the app runs on
 EXPOSE 8000
-WORKDIR /
-# Create a directory for endpoints
+
 # Command to run the application
-CMD ["uvicorn", "src.endpoint.main:app", "--host", "0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.endpoint.main:app", "--host", "0.0.0.0", "--port", "8000"]
