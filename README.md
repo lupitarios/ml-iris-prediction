@@ -1,4 +1,4 @@
-# ml-iris-prediction api integration
+# ml-iris-api-integration
 
 I have been interested in Machine Learning for some time, particularly in understanding how trained models are integrated into real-world backend systems. This project simulates a production-like environment where a pre-trained toy model (Iris dataset classifier) is deployed as a RESTful API using FastAPI.
 
